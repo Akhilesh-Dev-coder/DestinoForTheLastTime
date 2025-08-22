@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,15 +13,36 @@ const Login = () => {
     email: "",
     password: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add login logic
-    console.log("Login submitted:", formData);
+    setLoading(true);
+    setError("");
+
+    try {
+      // Call your backend API
+      const response = await axios.post("http://localhost:5000/api/auth/login", formData, {
+        headers: { "Content-Type": "application/json" }
+      });
+
+      // Save token/user data to localStorage
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      // Redirect to dashboard or home page
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,6 +70,7 @@ const Login = () => {
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -84,29 +107,22 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <Link
-                  to="/forgot-password"
-                  className="text-primary hover:underline"
-                >
+                <Link to="/forgot-password" className="text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full travel-button group">
-                Sign In
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button type="submit" className="w-full travel-button group" disabled={loading}>
+                {loading ? "Signing In..." : "Sign In"}
+                {!loading && <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />}
               </Button>
               
               <p className="text-center text-sm text-muted-foreground">
@@ -117,10 +133,7 @@ const Login = () => {
               </p>
 
               <div className="text-center">
-                <Link
-                  to="/admin-login"
-                  className="text-xs text-muted-foreground hover:text-primary"
-                >
+                <Link to="/admin-login" className="text-xs text-muted-foreground hover:text-primary">
                   Admin Login
                 </Link>
               </div>

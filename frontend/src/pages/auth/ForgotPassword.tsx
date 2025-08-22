@@ -10,12 +10,27 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Add forgot password logic
-    console.log("Forgot password submitted:", email);
-    setIsSubmitted(true);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      setIsSubmitted(true);
+    } else {
+      alert(data.error || 'Failed to send reset link');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Something went wrong, try again later');
+  }
+};
+
 
   if (isSubmitted) {
     return (
