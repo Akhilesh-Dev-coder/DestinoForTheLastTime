@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// Dashboard.tsx (final version with mount logic)
+
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Car, Train, Plane, Search, Calendar, Users, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
+import { useTrip } from "@/context/TripContext"; // Import context
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { setCurrentTrip } = useTrip(); // Use context
   const [formData, setFormData] = useState({
     startLocation: "",
     destination: "",
@@ -17,6 +21,27 @@ const Dashboard = () => {
     departureDate: "",
     travelers: "1"
   });
+
+  // ✅ Mount: Check if we need to prefill from saved trip
+  useEffect(() => {
+    const prefill = localStorage.getItem('prefillTrip');
+    if (prefill) {
+      try {
+        const trip = JSON.parse(prefill);
+        setFormData({
+          startLocation: trip.startLocation || "",
+          destination: trip.destination || "",
+          travelMode: trip.travelMode || "",
+          departureDate: trip.departureDate || "",
+          travelers: trip.travelers || "1",
+        });
+        // Optional: clear after use so it doesn't re-prefill on refresh
+        localStorage.removeItem('prefillTrip');
+      } catch (error) {
+        console.error("Failed to parse prefill trip data", error);
+      }
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,8 +53,20 @@ const Dashboard = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Process travel plan data
-    console.log("Travel plan submitted:", formData);
+
+    const tripData = {
+      startLocation: formData.startLocation,
+      destination: formData.destination,
+      travelMode: formData.travelMode,
+      departureDate: formData.departureDate,
+      travelers: formData.travelers,
+      timestamp: new Date().toISOString()
+    };
+
+    // ✅ Set current trip in context instead of window
+    setCurrentTrip(tripData);
+
+    console.log("Travel plan submitted:", tripData);
     navigate("/results");
   };
 
@@ -117,7 +154,10 @@ const Dashboard = () => {
                       <Car className="h-4 w-4 text-primary" />
                       Travel Mode
                     </Label>
-                    <Select onValueChange={(value) => handleSelectChange("travelMode", value)}>
+                    <Select
+                      value={formData.travelMode}
+                      onValueChange={(value) => handleSelectChange("travelMode", value)}
+                    >
                       <SelectTrigger className="travel-input">
                         <SelectValue placeholder="Select your preferred travel mode" />
                       </SelectTrigger>
@@ -161,7 +201,10 @@ const Dashboard = () => {
                         <Users className="h-4 w-4 text-primary" />
                         Number of Travelers
                       </Label>
-                      <Select onValueChange={(value) => handleSelectChange("travelers", value)}>
+                      <Select
+                        value={formData.travelers}
+                        onValueChange={(value) => handleSelectChange("travelers", value)}
+                      >
                         <SelectTrigger className="travel-input">
                           <SelectValue placeholder="1" />
                         </SelectTrigger>

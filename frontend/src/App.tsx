@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { TripProvider } from "./context/TripContext";
 
 // Import pages
 import Index from "./pages/Index";
@@ -19,6 +20,7 @@ import ManageHotels from "./pages/admin/ManageHotels";
 import ManageRestaurants from "./pages/admin/ManageRestaurants";
 import ManageAttractions from "./pages/admin/ManageAttractions";
 import NotFound from "./pages/NotFound";
+import TripsPage from "./pages/TripsPage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+      <TripProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           
@@ -48,10 +51,12 @@ const App = () => (
           <Route path="/admin/hotels" element={<ManageHotels />} />
           <Route path="/admin/restaurants" element={<ManageRestaurants />} />
           <Route path="/admin/attractions" element={<ManageAttractions />} />
+          <Route path="/trips" element={<TripsPage />} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </TripProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

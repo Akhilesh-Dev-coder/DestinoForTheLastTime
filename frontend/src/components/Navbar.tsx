@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Plane } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,20 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="p-2 bg-gradient-to-r from-primary to-accent rounded-lg">
-              <Plane className="h-6 w-6 text-primary-foreground" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="h-6 w-6 text-primary-foreground"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0 2 2 4 4 4 1.061 0 2.061-.394 2.865-1.061l2.792 2.792zm-3.536-3.536A4 4 0 009 13c0-2.21 1.79-4 4-4 1.3 0 2.45.62 3.17 1.58l-2.17 2.17z"
+                />
+              </svg>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               TravelPlanner
@@ -44,6 +57,15 @@ const Navbar = () => {
                 isActive("/results") ? "text-primary" : "text-muted-foreground"
               )}
             >
+              Results
+            </Link>
+            <Link
+              to="/trips"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isActive("/trips") ? "text-primary" : "text-muted-foreground"
+              )}
+            >
               My Trips
             </Link>
           </div>
@@ -65,19 +87,17 @@ const Navbar = () => {
           <button
             onClick={toggleMenu}
             className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+            aria-expanded={isMenuOpen}
+            aria-label="Toggle menu"
           >
-            {isMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 animate-slide-up">
-            <div className="flex flex-col space-y-4">
+          <div className="md:hidden py-4 animate-slide-up border-t border-border/20">
+            <div className="flex flex-col space-y-2">
               <Link
                 to="/dashboard"
                 className={cn(
@@ -96,9 +116,20 @@ const Navbar = () => {
                 )}
                 onClick={toggleMenu}
               >
+                Results
+              </Link>
+              <Link
+                to="/trips"
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                  isActive("/trips") ? "text-primary" : "text-muted-foreground"
+                )}
+                onClick={toggleMenu}
+              >
                 My Trips
               </Link>
-              <div className="border-t border-border/20 pt-4">
+
+              <div className="border-t border-border/20 pt-4 mt-2">
                 <div className="flex flex-col space-y-2 px-4">
                   <Button variant="ghost" size="sm" className="justify-start" asChild>
                     <Link to="/login" onClick={toggleMenu}>
