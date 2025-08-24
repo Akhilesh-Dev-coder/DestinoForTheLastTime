@@ -8,28 +8,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/admin/login", {
+      const response = await fetch("http://localhost:5000/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
@@ -37,9 +34,10 @@ const AdminLogin = () => {
       if (!response.ok) {
         setError(data.message || "Invalid credentials");
       } else {
-        // Save token or admin session if your backend sends it
+        // ✅ Save token AND admin data
         localStorage.setItem("adminToken", data.token);
-        navigate("/admin/dashboard"); // Navigate to admin dashboard
+        localStorage.setItem("admin", JSON.stringify(data.admin));
+        navigate("/admin/dashboard");
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -51,7 +49,6 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center travel-gradient-bg p-4">
       <div className="w-full max-w-md space-y-8 animate-slide-up">
-        {/* Header */}
         <div className="text-center">
           <div className="inline-flex p-3 bg-gradient-to-r from-destructive to-orange-500 rounded-full mb-4">
             <Shield className="h-8 w-8 text-primary-foreground" />
@@ -64,7 +61,6 @@ const AdminLogin = () => {
           </p>
         </div>
 
-        {/* Card */}
         <Card className="travel-card border-destructive/20">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center text-destructive">Admin Login</CardTitle>
@@ -72,7 +68,7 @@ const AdminLogin = () => {
               Enter your administrative credentials
             </CardDescription>
           </CardHeader>
-          
+
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -86,7 +82,7 @@ const AdminLogin = () => {
                     placeholder="Enter admin email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="travel-input pl-10 border-destructive/20 focus:ring-destructive focus:border-destructive"
+                    className="travel-input pl-10 border-destructive/20"
                     required
                   />
                 </div>
@@ -103,7 +99,7 @@ const AdminLogin = () => {
                     placeholder="Enter admin password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="travel-input pl-10 pr-10 border-destructive/20 focus:ring-destructive focus:border-destructive"
+                    className="travel-input pl-10 pr-10 border-destructive/20"
                     required
                   />
                   <button
@@ -116,19 +112,19 @@ const AdminLogin = () => {
                 </div>
               </div>
 
-              {error && <p className="text-red-500 text-sm">{error}</p>}
+              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-gradient-to-r from-destructive to-orange-500 hover:from-destructive/90 hover:to-orange-500/90 text-primary-foreground group"
                 disabled={loading}
               >
                 {loading ? "Logging in..." : "Access Admin Panel"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
-              
+
               <Link to="/login" className="w-full">
                 <Button variant="ghost" className="w-full text-muted-foreground">
                   ← Regular User Login
