@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import TravelCard from "@/components/TravelCard";
 import { useTrip } from "@/context/TripContext";
+import { authAPI } from "@/services/AuthAPI";
 
 interface TripData {
   startLocation: string;
@@ -68,6 +69,23 @@ const Results = () => {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const tripData = currentTrip;
+  
+  useEffect(() => {
+    async function verifyToken() {
+      const token = localStorage.getItem('token');
+      if(!token) {
+        alert('Login to access result section');
+        navigate('/login');
+      } else {
+        const request = await authAPI.verifyToken(token);
+        if(!request.success) {
+          alert('Session Expired. Login again to access Result Section');
+          navigate('/login');
+        }
+      }
+    };
+    verifyToken();
+  }, []);
 
   useEffect(() => {
     if (!tripData) return;

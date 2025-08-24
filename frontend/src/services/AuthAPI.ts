@@ -1,7 +1,9 @@
 // src/services/authAPI.ts
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "http://localhost:5000/api/auth"; // ✅ Confirm port (was 1833?)
+const navigate = useNavigate();
 
 export const authAPI = {
   signup: async (name: string, email: string, password: string) => {
@@ -26,5 +28,10 @@ export const authAPI = {
       } 
     });
     return response.data;
+  },
+  logout: () => {
+    localStorage.clear();
+    alert('Logged Out Successfully...redirecting to login page');
+    navigate('/login');
   }
 };

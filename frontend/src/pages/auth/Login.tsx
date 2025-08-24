@@ -29,15 +29,15 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData.email, formData.password);
-
       if(response.success) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("token", response.token);
+        localStorage.setItem("user", JSON.stringify(response.user));
         navigate("/dashboard");
       } else {
         alert('Something Went Wrong : ' + response.message);
       }
     } catch (err: any) {
+      console.log(err);
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
