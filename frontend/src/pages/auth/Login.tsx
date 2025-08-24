@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
+import { authAPI } from "@/services/AuthAPI";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,17 +28,15 @@ const Login = () => {
     setError("");
 
     try {
-      // Call your backend API
-      const response = await axios.post("http://localhost:5000/api/auth/login", formData, {
-        headers: { "Content-Type": "application/json" }
-      });
+      const response = await authAPI.login(formData.email, formData.password);
 
-      // Save token/user data to localStorage
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      // Redirect to dashboard or home page
-      navigate("/dashboard");
+      if(response.success) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        navigate("/dashboard");
+      } else {
+        alert('Something Went Wrong : ' + response.message);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {

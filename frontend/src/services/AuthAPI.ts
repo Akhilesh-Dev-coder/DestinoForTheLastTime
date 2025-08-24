@@ -20,7 +20,11 @@ export const authAPI = {
     return response.data;
   },
   verifyToken: async (token) => {
-    const response = await axios.get(`${BASE_URL}/verify-token`, { headers : { Authorization : `Bearer ${token}` } });
+    const response = await axios.get(`${BASE_URL}/verify-token`, { 
+      headers : { 
+        Authorization : `Bearer ${token}` 
+      } 
+    });
     return response.data;
   }
 };
