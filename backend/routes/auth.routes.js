@@ -28,6 +28,6 @@ router.post('/register', async (req, res) => {
         console.log(error);
         res.status(400).json({ success : false, message : "Error Occured", err : error });
     }
-})
+});
 
 module.exports = router;
