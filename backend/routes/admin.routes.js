@@ -57,4 +57,24 @@ router.post('/login', async (req, res) => {
 });
 
 
+router.get('/get-users', async (req, res) => {
+  try {
+    const users = await db('user_creds').select('user_id', 'username', 'email'); 
+
+    res.status(200).json({
+      success: true,
+      message: 'Users fetched successfully',
+      users,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      err: error.message,
+    });
+  }
+});
+
+
 module.exports = router;
