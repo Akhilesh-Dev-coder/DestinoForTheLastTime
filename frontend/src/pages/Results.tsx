@@ -562,7 +562,12 @@ const Results = () => {
                 </span>
               </p>
             </div>
-            
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleSave}>
+                <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current text-yellow-500' : ''}`} />
+                {isSaved ? 'Saved' : 'Save'}
+              </Button>
+            </div>
             
           </div>
 
