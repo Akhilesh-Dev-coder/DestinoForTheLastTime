@@ -6,15 +6,13 @@ const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
-
-
 app.use(cors({
   origin : '*'
 }));
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
 
+app.use('/api/auth', authRoutes);
 
 
 const PORT = process.env.PORT || 5000;
