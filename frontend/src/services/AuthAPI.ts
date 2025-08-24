@@ -1,14 +1,12 @@
-// src/services/authAPI.ts
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "http://localhost:5000/api/auth"; // ✅ Confirm port (was 1833?)
-const navigate = useNavigate();
+const BASE_URL = "http://localhost:5000/api/auth"; 
 
 export const authAPI = {
   signup: async (name: string, email: string, password: string) => {
     const response = await axios.post(`${BASE_URL}/register`, {
-      username: name, // ←←← Fixed: was "name", should map to "username"
+      username: name,
       email,
       password,
     });
@@ -32,6 +30,6 @@ export const authAPI = {
   logout: () => {
     localStorage.clear();
     alert('Logged Out Successfully...redirecting to login page');
-    navigate('/login');
+    window.location.href = 'http://localhost:8080/login';
   }
 };
