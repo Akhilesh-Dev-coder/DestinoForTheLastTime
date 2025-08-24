@@ -26,7 +26,7 @@ const AdminSidebar = () => {
   const menuItems = [
     { 
       title: "Dashboard", 
-      href: "/admin", 
+      href: "/admin/dashboard", 
       icon: LayoutDashboard 
     },
     { 
@@ -34,26 +34,7 @@ const AdminSidebar = () => {
       href: "/admin/users", 
       icon: Users 
     },
-    { 
-      title: "Destinations", 
-      href: "/admin/destinations", 
-      icon: MapPin 
-    },
-    { 
-      title: "Hotels", 
-      href: "/admin/hotels", 
-      icon: Hotel 
-    },
-    { 
-      title: "Restaurants", 
-      href: "/admin/restaurants", 
-      icon: UtensilsCrossed 
-    },
-    { 
-      title: "Attractions", 
-      href: "/admin/attractions", 
-      icon: Camera 
-    },
+    
   ];
 
   return (

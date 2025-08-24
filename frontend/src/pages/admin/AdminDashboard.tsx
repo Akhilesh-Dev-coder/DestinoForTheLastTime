@@ -137,15 +137,7 @@ const AdminDashboard = () => {
                 <p className="text-sm font-medium text-foreground">{admin?.username}</p>
                 <p className="text-xs text-muted-foreground">{admin?.email}</p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+             
             </div>
           </header>
 

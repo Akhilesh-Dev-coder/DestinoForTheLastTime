@@ -15,10 +15,6 @@ import Dashboard from "./pages/Dashboard";
 import Results from "./pages/Results";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageUsers from "./pages/admin/ManageUsers";
-import ManageDestinations from "./pages/admin/ManageDestinations";
-import ManageHotels from "./pages/admin/ManageHotels";
-import ManageRestaurants from "./pages/admin/ManageRestaurants";
-import ManageAttractions from "./pages/admin/ManageAttractions";
 import NotFound from "./pages/NotFound";
 import TripsPage from "./pages/TripsPage";
 
@@ -47,10 +43,6 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<ManageUsers />} />
-          <Route path="/admin/destinations" element={<ManageDestinations />} />
-          <Route path="/admin/hotels" element={<ManageHotels />} />
-          <Route path="/admin/restaurants" element={<ManageRestaurants />} />
-          <Route path="/admin/attractions" element={<ManageAttractions />} />
           <Route path="/trips" element={<TripsPage />} />
           
           {/* Catch-all route */}

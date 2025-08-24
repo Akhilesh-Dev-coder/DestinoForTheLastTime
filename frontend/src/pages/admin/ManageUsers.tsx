@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Plus, Edit, Trash2, Filter, MoreHorizontal, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,60 +7,92 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AdminSidebar from "@/components/AdminSidebar";
+import { useNavigate } from "react-router-dom";
 
 const ManageUsers = () => {
+  const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Dummy user data
-  const users = [
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john.smith@example.com",
-      role: "User",
-      status: "Active",
-      joinDate: "2024-01-15",
-      lastLogin: "2024-08-20"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah.j@example.com",
-      role: "Premium",
-      status: "Active",
-      joinDate: "2024-02-10",
-      lastLogin: "2024-08-19"
-    },
-    {
-      id: 3,
-      name: "Mike Wilson",
-      email: "mike.wilson@example.com",
-      role: "User",
-      status: "Inactive",
-      joinDate: "2024-03-05",
-      lastLogin: "2024-08-10"
-    },
-    {
-      id: 4,
-      name: "Emily Chen",
-      email: "emily.chen@example.com",
-      role: "Admin",
-      status: "Active",
-      joinDate: "2023-12-01",
-      lastLogin: "2024-08-21"
-    },
-    {
-      id: 5,
-      name: "David Brown",
-      email: "david.brown@example.com",
-      role: "User",
-      status: "Suspended",
-      joinDate: "2024-01-20",
-      lastLogin: "2024-07-15"
-    }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const getStatusBadge = (status: string) => {
+  // Load users on mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch("http://localhost:5000/api/admin/get-users", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        navigate("/admin-login", { replace: true });
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        // Format: { id, username, email, created_at }
+        setUsers(data.users.map(user => ({
+          id: user.id,
+          name: user.username,
+          email: user.email,
+          role: "User", // You can enhance this later
+          status: "Active", // or fetch from DB
+          joinDate: new Date(user.created_at).toISOString().split('T')[0],
+          lastLogin: "Never", // placeholder
+        })));
+      } else {
+        setError(data.message || "Failed to load users");
+      }
+    } catch (err) {
+      setError("Network error. Could not connect to server.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`http://localhost:5000/api/admin/delete-user/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setUsers(users.filter(u => u.id !== id));
+      } else {
+        alert(data.message || "Failed to delete user");
+      }
+    } catch (err) {
+      alert("Error deleting user. Please try again.");
+    }
+  };
+
+  const handleToggleStatus = async (user) => {
+    // In this version, we don't have a status field in DB
+    // So we just show a confirmation
+    const newStatus = user.status === "Active" ? "Inactive" : "Active";
+    if (window.confirm(`Set ${user.name} to ${newStatus}?`)) {
+      setUsers(users.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+    }
+  };
+
+  const getStatusBadge = (status) => {
     switch (status) {
       case "Active":
         return <Badge className="bg-success/10 text-success">Active</Badge>;
@@ -73,7 +105,7 @@ const ManageUsers = () => {
     }
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role) => {
     switch (role) {
       case "Admin":
         return <Badge className="bg-destructive/10 text-destructive">Admin</Badge>;
@@ -91,10 +123,18 @@ const ManageUsers = () => {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center travel-gradient-bg">
+        <p className="text-lg text-muted-foreground">Loading users...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen travel-gradient-bg">
       <AdminSidebar />
-      
+
       <div className="ml-16 lg:ml-64 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -105,7 +145,10 @@ const ManageUsers = () => {
                 Manage user accounts, roles, and permissions
               </p>
             </div>
-            <Button className="travel-button">
+            <Button
+              className="travel-button"
+              onClick={() => alert("Create user form not implemented yet.")}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add New User
             </Button>
@@ -121,7 +164,7 @@ const ManageUsers = () => {
                 <div className="text-2xl font-bold text-foreground">{users.length}</div>
               </CardContent>
             </Card>
-            
+
             <Card className="travel-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
@@ -132,7 +175,7 @@ const ManageUsers = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="travel-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Premium Users</CardTitle>
@@ -143,7 +186,7 @@ const ManageUsers = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="travel-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Admins</CardTitle>
@@ -162,9 +205,7 @@ const ManageUsers = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>All Users</CardTitle>
-                  <CardDescription>
-                    A list of all users in your system
-                  </CardDescription>
+                  <CardDescription>A list of all users in your system</CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="relative">
@@ -184,6 +225,7 @@ const ManageUsers = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -197,52 +239,69 @@ const ManageUsers = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="border-border hover:bg-muted/20">
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-foreground">{user.name}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell className="text-muted-foreground">{user.joinDate}</TableCell>
-                        <TableCell className="text-muted-foreground">{user.lastLogin}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-popover border border-border">
-                              <DropdownMenuItem className="hover:bg-muted">
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit User
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="hover:bg-muted">
-                                {user.status === "Active" ? (
-                                  <>
-                                    <UserX className="h-4 w-4 mr-2" />
-                                    Suspend User
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Activate User
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="hover:bg-muted text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete User
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                    {filteredUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                          No users found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id} className="border-border hover:bg-muted/20">
+                          <TableCell>
+                            <div>
+                              <div className="font-medium text-foreground">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getRoleBadge(user.role)}</TableCell>
+                          <TableCell>{getStatusBadge(user.status)}</TableCell>
+                          <TableCell className="text-muted-foreground">{user.joinDate}</TableCell>
+                          <TableCell className="text-muted-foreground">{user.lastLogin}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-popover border border-border">
+                                <DropdownMenuItem
+                                  className="hover:bg-muted cursor-pointer"
+                                  onClick={() => alert(`Edit user: ${user.name}`)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit User
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="hover:bg-muted cursor-pointer"
+                                  onClick={() => handleToggleStatus(user)}
+                                >
+                                  {user.status === "Active" ? (
+                                    <>
+                                      <UserX className="h-4 w-4 mr-2" />
+                                      Suspend User
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="h-4 w-4 mr-2" />
+                                      Activate User
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="hover:bg-muted text-destructive cursor-pointer"
+                                  onClick={() => handleDeleteUser(user.id, user.name)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
