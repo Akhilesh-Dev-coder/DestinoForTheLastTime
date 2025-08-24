@@ -1,10 +1,8 @@
-// routes/auth.routes.js
 const db = require('../configs/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = require('express').Router();
 
-// ✅ REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -32,7 +30,6 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
     });
 
-    // ✅ Generate token with correct id
     const token = jwt.sign(
       { id: newUserId, email, username },
       process.env.JWT_SECRET,
@@ -55,7 +52,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ✅ LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -83,7 +79,6 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // ✅ Use user.id, not user.user_id
     const token = jwt.sign(
       { id: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET,
@@ -110,7 +105,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ✅ VERIFY TOKEN
 router.get('/verify-token', async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];
