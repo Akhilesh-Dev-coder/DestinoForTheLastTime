@@ -41,7 +41,7 @@ const ManageUsers = () => {
       if (data.success) {
         // Format: { id, username, email, created_at }
         setUsers(data.users.map(user => ({
-          id: user.id,
+          id: user.user_id,
           name: user.username,
           email: user.email,
           role: "User", // You can enhance this later
