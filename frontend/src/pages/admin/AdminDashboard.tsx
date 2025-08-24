@@ -1,10 +1,52 @@
-import React from "react";
-import { Users, MapPin, Hotel, UtensilsCrossed, Camera, TrendingUp, Activity } from "lucide-react";
+// src/pages/AdminDashboard.tsx
+import React, { useEffect, useState } from "react";
+import { Users, MapPin, Hotel, UtensilsCrossed, Camera, TrendingUp, Activity, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import AdminSidebar from "@/components/AdminSidebar";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [admin, setAdmin] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Check auth and load admin data on mount
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    const adminData = localStorage.getItem("admin");
+
+    if (!token || !adminData) {
+      navigate("/admin-login", { replace: true });
+      return;
+    }
+
+    try {
+      const parsedAdmin = JSON.parse(adminData);
+      setAdmin(parsedAdmin);
+      setIsLoaded(true);
+    } catch (err) {
+      console.error("Failed to parse admin data", err);
+      localStorage.clear();
+      navigate("/admin-login", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("admin");
+    navigate("/admin-login", { replace: true });
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center travel-gradient-bg">
+        <p className="text-lg text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   const stats = [
     {
       title: "Total Users",
@@ -78,16 +120,34 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen travel-gradient-bg">
       <AdminSidebar />
-      
+
       <div className="ml-16 lg:ml-64 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="animate-fade-in">
-            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back! Here's what's happening with your travel platform.
-            </p>
-          </div>
+          <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="text-muted-foreground">
+                Welcome back, <span className="font-semibold">{admin?.username}</span>! Here's what's happening.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">{admin?.username}</p>
+                <p className="text-xs text-muted-foreground">{admin?.email}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </header>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
@@ -130,18 +190,31 @@ const AdminDashboard = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                      >
                         <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-full ${
-                            activity.type === 'user' ? 'bg-blue-500/10 text-blue-500' :
-                            activity.type === 'hotel' ? 'bg-purple-500/10 text-purple-500' :
-                            activity.type === 'destination' ? 'bg-green-500/10 text-green-500' :
-                            'bg-orange-500/10 text-orange-500'
-                          }`}>
-                            {activity.type === 'user' ? <Users className="h-4 w-4" /> :
-                             activity.type === 'hotel' ? <Hotel className="h-4 w-4" /> :
-                             activity.type === 'destination' ? <MapPin className="h-4 w-4" /> :
-                             <UtensilsCrossed className="h-4 w-4" />}
+                          <div
+                            className={`p-2 rounded-full ${
+                              activity.type === 'user'
+                                ? 'bg-blue-500/10 text-blue-500'
+                                : activity.type === 'hotel'
+                                ? 'bg-purple-500/10 text-purple-500'
+                                : activity.type === 'destination'
+                                ? 'bg-green-500/10 text-green-500'
+                                : 'bg-orange-500/10 text-orange-500'
+                            }`}
+                          >
+                            {activity.type === 'user' ? (
+                              <Users className="h-4 w-4" />
+                            ) : activity.type === 'hotel' ? (
+                              <Hotel className="h-4 w-4" />
+                            ) : activity.type === 'destination' ? (
+                              <MapPin className="h-4 w-4" />
+                            ) : (
+                              <UtensilsCrossed className="h-4 w-4" />
+                            )}
                           </div>
                           <div>
                             <p className="text-sm font-medium text-foreground">{activity.action}</p>

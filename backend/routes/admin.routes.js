@@ -1,8 +1,11 @@
+// routes/admin.routes.js
 const db = require('../configs/database');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = require('express').Router();
 
+/**
+ * Admin Login (Plain Text Password)
+ */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -14,6 +17,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Fetch admin from DB
     const admin = await db('admin').where({ email }).first();
 
     if (!admin) {
@@ -23,6 +27,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // ✅ Plain text password comparison (NO bcrypt)
     if (password !== admin.password) {
       return res.status(401).json({
         success: false,
@@ -30,31 +35,32 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // ✅ Generate JWT
     const token = jwt.sign(
-      { id: admin.id, email: admin.email },
+      { id: admin.id, email: admin.email, role: 'admin' },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
+    // ✅ Send success response with token
     res.status(200).json({
       success: true,
       message: 'Admin logged in successfully',
       token,
       admin: {
         id: admin.id,
-        email: admin.email,
         username: admin.username,
+        email: admin.email,
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error('Admin login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error occurred',
+      message: 'Server error during login',
       err: error.message,
     });
   }
 });
-
 
 module.exports = router;
