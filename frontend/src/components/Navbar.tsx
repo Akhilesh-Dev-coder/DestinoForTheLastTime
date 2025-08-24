@@ -1,16 +1,29 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, CircleUserRound } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, User, CircleUserRound, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Get user from localStorage
+  const user = localStorage.getItem("user");
+  const userData = user ? JSON.parse(user) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsDropdownOpen(false);
+    navigate("/login");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border/20">
@@ -70,7 +83,43 @@ const Navbar = () => {
             </Link>
           </div>
 
-          <CircleUserRound />
+          {/* User Icon with Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => userData && setIsDropdownOpen(true)}
+            onMouseLeave={() => userData && setIsDropdownOpen(false)}
+          >
+            <CircleUserRound
+              className="h-8 w-8 cursor-pointer text-primary hover:scale-105 transition-transform"
+              onClick={() => {
+                if (userData) {
+                  setIsDropdownOpen(!isDropdownOpen);
+                } else {
+                  navigate("/login");
+                }
+              }}
+            />
+
+            {/* Dropdown Menu */}
+            {userData && isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in">
+                <div className="p-4 bg-gradient-to-b from-primary/10 to-transparent">
+                  <p className="font-semibold text-foreground">{userData.username}</p>
+                  <p className="text-sm text-muted-foreground">{userData.email}</p>
+                </div>
+                <div className="border-t border-border">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-sm text-destructive hover:text-destructive flex items-center gap-2 px-4 py-3"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -120,15 +169,46 @@ const Navbar = () => {
 
               <div className="border-t border-border/20 pt-4 mt-2">
                 <div className="flex flex-col space-y-2 px-4">
-                  <Button variant="ghost" size="sm" className="justify-start" asChild>
-                    <Link to="/login" onClick={toggleMenu}>
-                      <User className="h-4 w-4 mr-2" />
-                      Login
-                    </Link>
-                  </Button>
-                  <Button size="sm" className="travel-button justify-start" asChild>
-                    <Link to="/signup" onClick={toggleMenu}>Get Started</Link>
-                  </Button>
+                  {userData ? (
+                    <>
+                      <div className="text-sm">
+                        <p className="font-medium">{userData.username}</p>
+                        <p className="text-muted-foreground">{userData.email}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start text-destructive"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start"
+                        asChild
+                        onClick={toggleMenu}
+                      >
+                        <Link to="/login">
+                          <User className="h-4 w-4 mr-2" />
+                          Login
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="travel-button justify-start"
+                        asChild
+                        onClick={toggleMenu}
+                      >
+                        <Link to="/signup">Get Started</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
