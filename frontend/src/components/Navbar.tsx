@@ -35,7 +35,7 @@ const Navbar = () => {
               </svg>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              TravelPlanner
+              Destino
             </span>
           </Link>
 
