@@ -13,7 +13,6 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import AdminLogin from "./pages/auth/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import Results from "./pages/Results";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageUsers from "./pages/admin/ManageUsers";
 import NotFound from "./pages/NotFound";
 import TripsPage from "./pages/TripsPage";
@@ -41,7 +40,6 @@ const App = () => (
           <Route path="/results" element={<Results />} />
           
           {/* Admin Routes */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<ManageUsers />} />
           <Route path="/trips" element={<TripsPage />} />
           

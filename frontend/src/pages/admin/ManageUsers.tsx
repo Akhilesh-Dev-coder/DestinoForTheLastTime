@@ -144,13 +144,7 @@ const ManageUsers = () => {
                 Manage user accounts, roles, and permissions
               </p>
             </div>
-            <Button
-              className="travel-button"
-              onClick={() => alert("Create user form not implemented yet.")}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New User
-            </Button>
+            
           </div>
 
           {/* Stats Cards */}
