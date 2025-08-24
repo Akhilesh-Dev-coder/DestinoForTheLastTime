@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { useTrip } from "@/context/TripContext"; // Import context
+import { authAPI } from "@/services/AuthAPI";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -41,6 +42,21 @@ const Dashboard = () => {
         console.error("Failed to parse prefill trip data", error);
       }
     }
+
+    async function verifyToken() {
+      const token = localStorage.getItem('token');
+      if(!token) {
+        alert('Login to access dashboard');
+        navigate('/login');
+      } else {
+        const request = await authAPI.verifyToken(token);
+        if(!request.success) {
+          alert('Session Expired. Login again to access dashboard');
+          navigate('/login');
+        }
+      }
+    };
+    verifyToken();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
