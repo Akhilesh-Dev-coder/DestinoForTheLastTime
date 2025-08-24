@@ -68,7 +68,7 @@ router.use(authenticateAdmin);
 // ✅ Get all users
 router.get('/get-users', async (req, res) => {
   try {
-    const users = await db('user_creds').select('id', 'username', 'email', 'created_at');
+    const users = await db('user_creds').select('user_id', 'username', 'email');
     res.status(200).json({ success: true, users });
   } catch (error) {
     console.error(error);

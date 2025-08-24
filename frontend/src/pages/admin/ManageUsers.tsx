@@ -46,7 +46,6 @@ const ManageUsers = () => {
           email: user.email,
           role: "User", // You can enhance this later
           status: "Active", // or fetch from DB
-          joinDate: new Date(user.created_at).toISOString().split('T')[0],
           lastLogin: "Never", // placeholder
         })));
       } else {
