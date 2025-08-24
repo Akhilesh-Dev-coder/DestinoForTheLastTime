@@ -1,5 +1,6 @@
 const db = require('../configs/database');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const router = require('express').Router();
 
 router.post('/register', async (req, res) => {
@@ -30,30 +31,72 @@ router.post('/register', async (req, res) => {
     }
 });
 
-
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } =req.body;
+        const { email, password } = req.body;
 
-        if(!email || !password) {
-            return res.status(400).json({ success : false, message : "All Fields are required" });
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
         const user = await db('user_creds').where({ email }).first();
-        if(!user) {
-            return res.status(401).json({ success : false, message : "user not Found" });
+        if (!user) {
+            return res.status(401).json({ success: false, message: "User not found" });
         }
 
         const compare = await bcrypt.compare(password, user.password);
-        if(!compare) {
-            return res.status(401).json({ success : false, message : "Invalid Credentials" });
+        if (!compare) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        res.status(200).json({ success : true, message : "user logged In Successfully", user : { email : user.email, username : user.username } });
+        const token = jwt.sign(
+            { id: user.user_id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "24h" }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "User logged in successfully",
+            token,
+            user: {
+                id: user.user_id,
+                email: user.email,
+                username: user.username,
+            },
+        });
     } catch (error) {
         console.log(error);
-        res.status(400).json({ success : false, message : "Error Occured", err : error });
+        res.status(400).json({ success: false, message: "Error Occurred", err: error.message });
     }
-})
+});
+
+
+
+router.get('/verify-token', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        if (!authHeader) {
+            return res.status(401).json({ success: false, message: "No token provided" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            return res.status(401).json({ success: false, message: "Invalid token format" });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            success: true,
+            message: "Token is valid",
+            decoded,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(401).json({ success: false, message: "Invalid or expired token" });
+    }
+});
+
 
 module.exports = router;
