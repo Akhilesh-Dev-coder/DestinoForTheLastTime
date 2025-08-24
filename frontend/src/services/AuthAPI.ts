@@ -19,4 +19,9 @@ export const authAPI = {
     });
     return response.data;
   },
+  verifyToken: async () => {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${BASE_URL}/verify-token`, { headers : { Authorization : `Bearer ${token}` } });
+    return response.data;
+  }
 };
