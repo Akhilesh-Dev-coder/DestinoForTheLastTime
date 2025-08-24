@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, CircleUserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -70,18 +70,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <User className="h-4 w-4 mr-2" />
-                Login
-              </Link>
-            </Button>
-            <Button size="sm" className="travel-button" asChild>
-              <Link to="/signup">Get Started</Link>
-            </Button>
-          </div>
+          <CircleUserRound />
 
           {/* Mobile Menu Button */}
           <button
