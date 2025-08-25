@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, CircleUserRound, LogOut } from "lucide-react";
+import { Menu, X, User, CircleUserRound, LogOut, MessageSquare, X as CloseIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false); // Feedback modal
+  const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // Success notification
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -25,197 +30,325 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedback.trim()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Simulate API call (replace with actual API later)
+      await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network delay
+      console.log("Feedback submitted:", feedback);
+
+      setFeedback("");
+      setIsSubmitting(false);
+      setIsFeedbackOpen(false);
+      setShowSuccess(true);
+
+      // Hide success after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Feedback submission failed:", error);
+      alert("Failed to send feedback. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border/20">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="p-2 bg-gradient-to-r from-primary to-accent rounded-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="h-6 w-6 text-primary-foreground"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0 2 2 4 4 4 1.061 0 2.061-.394 2.865-1.061l2.792 2.792zm-3.536-3.536A4 4 0 009 13c0-2.21 1.79-4 4-4 1.3 0 2.45.62 3.17 1.58l-2.17 2.17z"
-                />
-              </svg>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Destino
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/dashboard"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                isActive("/dashboard") ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/results"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                isActive("/results") ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              Results
-            </Link>
-            <Link
-              to="/trips"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                isActive("/trips") ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              My Trips
-            </Link>
-          </div>
-
-          {/* User Icon with Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => userData && setIsDropdownOpen(true)}
-            onMouseLeave={() => userData && setIsDropdownOpen(false)}
-          >
-            <CircleUserRound
-              className="h-8 w-8 cursor-pointer text-primary hover:scale-105 transition-transform"
-              onClick={() => {
-                if (userData) {
-                  setIsDropdownOpen(!isDropdownOpen);
-                } else {
-                  navigate("/login");
-                }
-              }}
-            />
-
-            {/* Dropdown Menu */}
-            {userData && isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in">
-                <div className="p-4 bg-gradient-to-b from-primary/10 to-transparent">
-                  <p className="font-semibold text-foreground">{userData.username}</p>
-                  <p className="text-sm text-muted-foreground">{userData.email}</p>
-                </div>
-                <div className="border-t border-border">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-sm text-destructive hover:text-destructive flex items-center gap-2 px-4 py-3"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
-                </div>
+    <>
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border/20">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="p-2 bg-gradient-to-r from-primary to-accent rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6 text-primary-foreground"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0 2 2 4 4 4 1.061 0 2.061-.394 2.865-1.061l2.792 2.792zm-3.536-3.536A4 4 0 009 13c0-2.21 1.79-4 4-4 1.3 0 2.45.62 3.17 1.58l-2.17 2.17z"
+                  />
+                </svg>
               </div>
-            )}
-          </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Destino
+              </span>
+            </Link>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-            aria-expanded={isMenuOpen}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 animate-slide-up border-t border-border/20">
-            <div className="flex flex-col space-y-2">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
               <Link
                 to="/dashboard"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                  "text-sm font-medium transition-colors hover:text-primary",
                   isActive("/dashboard") ? "text-primary" : "text-muted-foreground"
                 )}
-                onClick={toggleMenu}
               >
                 Dashboard
               </Link>
               <Link
                 to="/results"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                  "text-sm font-medium transition-colors hover:text-primary",
                   isActive("/results") ? "text-primary" : "text-muted-foreground"
                 )}
-                onClick={toggleMenu}
               >
                 Results
               </Link>
               <Link
                 to="/trips"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                  "text-sm font-medium transition-colors hover:text-primary",
                   isActive("/trips") ? "text-primary" : "text-muted-foreground"
                 )}
-                onClick={toggleMenu}
               >
                 My Trips
               </Link>
+            </div>
 
-              <div className="border-t border-border/20 pt-4 mt-2">
-                <div className="flex flex-col space-y-2 px-4">
-                  {userData ? (
-                    <>
-                      <div className="text-sm">
-                        <p className="font-medium">{userData.username}</p>
-                        <p className="text-muted-foreground">{userData.email}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start text-destructive"
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start"
-                        asChild
-                        onClick={toggleMenu}
-                      >
-                        <Link to="/login">
-                          <User className="h-4 w-4 mr-2" />
-                          Login
-                        </Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="travel-button justify-start"
-                        asChild
-                        onClick={toggleMenu}
-                      >
-                        <Link to="/signup">Get Started</Link>
-                      </Button>
-                    </>
+            {/* User Icon with Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => userData && setIsDropdownOpen(true)}
+              onMouseLeave={() => userData && setIsDropdownOpen(false)}
+            >
+              <CircleUserRound
+                className="h-8 w-8 cursor-pointer text-primary hover:scale-105 transition-transform"
+                onClick={() => {
+                  if (userData) {
+                    setIsDropdownOpen(!isDropdownOpen);
+                  } else {
+                    navigate("/login");
+                  }
+                }}
+              />
+
+              {/* Dropdown Menu */}
+              {userData && isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in">
+                  <div className="p-4 bg-gradient-to-b from-primary/10 to-transparent">
+                    <p className="font-semibold text-foreground">{userData.username}</p>
+                    <p className="text-sm text-muted-foreground">{userData.email}</p>
+                  </div>
+                  <div className="border-t border-border">
+                    {/* Feedback Button */}
+                    <button
+                      type="button"
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsFeedbackOpen(true);
+                        setIsDropdownOpen(false); // Close dropdown
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Give Feedback
+                    </button>
+
+                    {/* Logout Button */}
+                    <button
+                      type="button"
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-destructive/10 hover:text-destructive transition-colors flex items-center gap-2 text-muted-foreground"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMenu}
+              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              aria-expanded={isMenuOpen}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 animate-slide-up border-t border-border/20">
+              <div className="flex flex-col space-y-2">
+                <Link
+                  to="/dashboard"
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                    isActive("/dashboard") ? "text-primary" : "text-muted-foreground"
                   )}
+                  onClick={toggleMenu}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/results"
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                    isActive("/results") ? "text-primary" : "text-muted-foreground"
+                  )}
+                  onClick={toggleMenu}
+                >
+                  Results
+                </Link>
+                <Link
+                  to="/trips"
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                    isActive("/trips") ? "text-primary" : "text-muted-foreground"
+                  )}
+                  onClick={toggleMenu}
+                >
+                  My Trips
+                </Link>
+
+                <div className="border-t border-border/20 pt-4 mt-2">
+                  <div className="flex flex-col space-y-2 px-4">
+                    {userData ? (
+                      <>
+                        <div className="text-sm">
+                          <p className="font-medium">{userData.username}</p>
+                          <p className="text-muted-foreground">{userData.email}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-left text-sm text-foreground hover:underline flex items-center gap-2"
+                          onClick={() => {
+                            setIsFeedbackOpen(true);
+                            toggleMenu();
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          Give Feedback
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start text-destructive"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start"
+                          asChild
+                          onClick={toggleMenu}
+                        >
+                          <Link to="/login">
+                            <User className="h-4 w-4 mr-2" />
+                            Login
+                          </Link>
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="travel-button justify-start"
+                          asChild
+                          onClick={toggleMenu}
+                        >
+                          <Link to="/signup">Get Started</Link>
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Feedback Modal */}
+      {isFeedbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsFeedbackOpen(false)}
+          ></div>
+
+          {/* Modal */}
+          <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border overflow-hidden animate-scale-in">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Send Feedback</h3>
+                <button
+                  onClick={() => setIsFeedbackOpen(false)}
+                  className="p-1 hover:bg-muted rounded-full transition-colors"
+                  aria-label="Close feedback"
+                >
+                  <CloseIcon className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <form onSubmit={handleFeedbackSubmit}>
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="We'd love to hear your thoughts..."
+                  className="w-full p-3 border border-border rounded-lg bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                  rows={5}
+                  required
+                />
+                <div className="flex justify-end mt-4 space-x-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsFeedbackOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : "Send Feedback"}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
-        )}
-      </div>
-    </nav>
+        </div>
+      )}
+
+      {/* Success Toast Notification */}
+      {showSuccess && (
+        <div className="fixed top-20 right-4 z-50 animate-slide-in-from-right">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <span>Feedback sent successfully!</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
