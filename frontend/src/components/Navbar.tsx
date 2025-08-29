@@ -1,27 +1,64 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, CircleUserRound, LogOut, MessageSquare, X as CloseIcon } from "lucide-react";
+import {
+  Menu,
+  X,
+  User,
+  CircleUserRound,
+  LogOut,
+  MessageSquare,
+  X as CloseIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false); // Feedback modal
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false); // Success notification
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  const dropdownRef = useRef<HTMLDivElement>(null); // For dropdown outside click
 
   const isActive = (path: string) => location.pathname === path;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  // Get user from localStorage
+  // Get user data from localStorage
   const user = localStorage.getItem("user");
   const userData = user ? JSON.parse(user) : null;
+
+  // Pre-fill name and email from user data
+  useEffect(() => {
+    if (userData) {
+      setName(userData.username);
+      setEmail(userData.email);
+    } else {
+      setName("");
+      setEmail("");
+    }
+  }, [userData]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -32,25 +69,44 @@ const Navbar = () => {
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!feedback.trim()) return;
+    if (!feedback.trim() || !name.trim() || !email.trim()) return;
 
     setIsSubmitting(true);
 
     try {
-      // Simulate API call (replace with actual API later)
-      await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network delay
-      console.log("Feedback submitted:", feedback);
+      const response = await fetch("https://formspree.io/f/xbladaer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          feedback,
+          subject: "📬 New Feedback from Destino User",
+        }),
+      });
 
-      setFeedback("");
-      setIsSubmitting(false);
-      setIsFeedbackOpen(false);
-      setShowSuccess(true);
+      if (response.ok) {
+        // Reset form
+        setFeedback("");
+        setName("");
+        setEmail("");
+        setIsSubmitting(false);
+        setIsFeedbackOpen(false);
+        setShowSuccess(true);
 
-      // Hide success after 3 seconds
-      setTimeout(() => setShowSuccess(false), 3000);
+        // Hide success toast after 3 seconds
+        setTimeout(() => setShowSuccess(false), 3000);
+      } else {
+        const result = await response.json();
+        console.error("Formspree error:", result);
+        alert("Failed to send feedback. Please try again.");
+        setIsSubmitting(false);
+      }
     } catch (error) {
-      console.error("Feedback submission failed:", error);
-      alert("Failed to send feedback. Please try again.");
+      console.error("Network error:", error);
+      alert("Network error. Please check your connection and try again.");
       setIsSubmitting(false);
     }
   };
@@ -116,20 +172,12 @@ const Navbar = () => {
             </div>
 
             {/* User Icon with Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => userData && setIsDropdownOpen(true)}
-              onMouseLeave={() => userData && setIsDropdownOpen(false)}
-            >
+            <div className="relative" ref={dropdownRef}>
               <CircleUserRound
                 className="h-8 w-8 cursor-pointer text-primary hover:scale-105 transition-transform"
-                onClick={() => {
-                  if (userData) {
-                    setIsDropdownOpen(!isDropdownOpen);
-                  } else {
-                    navigate("/login");
-                  }
-                }}
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
               />
 
               {/* Dropdown Menu */}
@@ -140,21 +188,19 @@ const Navbar = () => {
                     <p className="text-sm text-muted-foreground">{userData.email}</p>
                   </div>
                   <div className="border-t border-border">
-                    {/* Feedback Button */}
                     <button
                       type="button"
                       className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 text-foreground"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsFeedbackOpen(true);
-                        setIsDropdownOpen(false); // Close dropdown
+                        setIsDropdownOpen(false);
                       }}
                     >
                       <MessageSquare className="h-4 w-4" />
                       Give Feedback
                     </button>
 
-                    {/* Logout Button */}
                     <button
                       type="button"
                       className="w-full text-left px-4 py-3 text-sm hover:bg-destructive/10 hover:text-destructive transition-colors flex items-center gap-2 text-muted-foreground"
@@ -299,14 +345,63 @@ const Navbar = () => {
               </div>
 
               <form onSubmit={handleFeedbackSubmit}>
-                <textarea
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="We'd love to hear your thoughts..."
-                  className="w-full p-3 border border-border rounded-lg bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
-                  rows={5}
-                  required
-                />
+                {/* Name Field */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-muted-foreground mb-1"
+                  >
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full p-3 border border-border rounded-lg bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    required
+                  />
+                </div>
+
+                {/* Email Field */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-muted-foreground mb-1"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    className="w-full p-3 border border-border rounded-lg bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    required
+                  />
+                </div>
+
+                {/* Feedback Message */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="feedback"
+                    className="block text-sm font-medium text-muted-foreground mb-1"
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    id="feedback"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="We'd love to hear your thoughts..."
+                    className="w-full p-3 border border-border rounded-lg bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                    rows={5}
+                    required
+                  />
+                </div>
+
                 <div className="flex justify-end mt-4 space-x-2">
                   <Button
                     type="button"
