@@ -17,6 +17,7 @@ import {
   Plane,
   AlertCircle,
   Map,
+  AlertTriangle, // Added for the warning icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +68,7 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null); // New state for days left
 
   const tripData = currentTrip;
   
@@ -86,6 +88,18 @@ const Results = () => {
     };
     verifyToken();
   }, []);
+
+  // New: Calculate days left until the trip
+  useEffect(() => {
+    if (!tripData?.departureDate) return;
+
+    const today = new Date();
+    const departure = new Date(tripData.departureDate);
+    const diffTime = departure.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert ms to days
+
+    setDaysLeft(diffDays);
+  }, [tripData]);
 
   useEffect(() => {
     if (!tripData) return;
@@ -140,7 +154,7 @@ const Results = () => {
 
         // Fetch weather
         const weatherRes = await fetch(
-          `    https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
+          `https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
         );
 
         if (!weatherRes.ok) throw new Error("Weather service unavailable");
@@ -398,7 +412,7 @@ const Results = () => {
         </div>
 
         <div class="footer">
-          <p>Thank you for using TravelPlanner! • <a href="    https://travelplanner.example.com    " target="_blank">travelplanner.example.com</a></p>
+          <p>Thank you for using TravelPlanner! • <a href="https://travelplanner.example.com" target="_blank">travelplanner.example.com</a></p>
           <p><em>Exported on ${new Date().toLocaleString()}</em></p>
         </div>
       </div>
@@ -574,6 +588,33 @@ const Results = () => {
             </div>
             
           </div>
+
+          {/* Days Left Alert Banner */}
+          {daysLeft !== null && (
+            <div className={`mb-8 p-4 rounded-lg text-white flex items-center gap-3 ${
+              daysLeft <= 3
+                ? 'bg-red-600'
+                : daysLeft <= 7
+                ? 'bg-yellow-500'
+                : 'bg-green-600'
+            }`}>
+              <AlertTriangle className="h-6 w-6 flex-shrink-0" />
+              <div>
+                <p className="font-semibold">
+                  {daysLeft < 0
+                    ? "Your trip has already departed! 🎉"
+                    : daysLeft === 0
+                    ? "Your trip is TODAY! 🎉 Have a great time!"
+                    : daysLeft === 1
+                    ? "Only 1 day left until your trip! ✈️"
+                    : `You have ${daysLeft} days left until your trip to ${tripData.destination}!`}
+                </p>
+                <p className="text-sm opacity-90 mt-1">
+                  Departure: {formatDate(tripData.departureDate)}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (
