@@ -140,7 +140,7 @@ const Results = () => {
 
         // Fetch weather
         const weatherRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
+          `    https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
         );
 
         if (!weatherRes.ok) throw new Error("Weather service unavailable");
@@ -398,7 +398,7 @@ const Results = () => {
         </div>
 
         <div class="footer">
-          <p>Thank you for using TravelPlanner! • <a href="https://travelplanner.example.com" target="_blank">travelplanner.example.com</a></p>
+          <p>Thank you for using TravelPlanner! • <a href="    https://travelplanner.example.com    " target="_blank">travelplanner.example.com</a></p>
           <p><em>Exported on ${new Date().toLocaleString()}</em></p>
         </div>
       </div>
@@ -566,6 +566,10 @@ const Results = () => {
               <Button variant="outline" size="sm" onClick={handleSave}>
                 <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current text-yellow-500' : ''}`} />
                 {isSaved ? 'Saved' : 'Save'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleGenerateLink} disabled={!tripData}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
               </Button>
             </div>
             

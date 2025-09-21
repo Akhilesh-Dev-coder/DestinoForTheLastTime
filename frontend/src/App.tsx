@@ -16,6 +16,7 @@ import Results from "./pages/Results";
 import ManageUsers from "./pages/admin/ManageUsers";
 import NotFound from "./pages/NotFound";
 import TripsPage from "./pages/TripsPage";
+import SharedTrip from "./pages/SharedTrip";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/admin/users" element={<ManageUsers />} />
           <Route path="/trips" element={<TripsPage />} />
+          <Route path="/trip/:id" element={<SharedTrip />} />
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
