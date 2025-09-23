@@ -1,5 +1,4 @@
-// Dashboard.tsx (final version with mount logic)
-
+// Dashboard.tsx (final version with mount logic AND trip duration)
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Car, Train, Plane, Search, Calendar, Users, Navigation } from "lucide-react";
@@ -15,12 +14,15 @@ import { authAPI } from "@/services/AuthAPI";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { setCurrentTrip } = useTrip(); // Use context
+
+  // 🆕 ADDED: 'tripDuration' to state
   const [formData, setFormData] = useState({
     startLocation: "",
     destination: "",
     travelMode: "",
     departureDate: "",
-    travelers: "1"
+    travelers: "1",
+    tripDuration: "3" // 🆕 ADDED: Default to 3 days
   });
 
   // ✅ Mount: Check if we need to prefill from saved trip
@@ -35,6 +37,7 @@ const Dashboard = () => {
           travelMode: trip.travelMode || "",
           departureDate: trip.departureDate || "",
           travelers: trip.travelers || "1",
+          tripDuration: trip.tripDuration || "3", // 🆕 ADDED: Prefill duration
         });
         // Optional: clear after use so it doesn't re-prefill on refresh
         localStorage.removeItem('prefillTrip');
@@ -76,12 +79,12 @@ const Dashboard = () => {
       travelMode: formData.travelMode,
       departureDate: formData.departureDate,
       travelers: formData.travelers,
+      tripDuration: formData.tripDuration, // 🆕 ADDED: Include duration in trip data
       timestamp: new Date().toISOString()
     };
 
     // ✅ Set current trip in context instead of window
     setCurrentTrip(tripData);
-
     console.log("Travel plan submitted:", tripData);
     navigate("/results");
   };
@@ -95,7 +98,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen travel-gradient-bg">
       <Navbar />
-      
       <div className="pt-20 pb-12">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
@@ -124,7 +126,6 @@ const Dashboard = () => {
                   Enter your travel details to get personalized recommendations
                 </CardDescription>
               </CardHeader>
-
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-6">
                   {/* Location Inputs */}
@@ -145,7 +146,6 @@ const Dashboard = () => {
                         required
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="destination" className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-accent" />
@@ -194,7 +194,7 @@ const Dashboard = () => {
                   </div>
 
                   {/* Additional Options */}
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4"> {/* 🆕 ADDED: Changed to 3 columns */}
                     <div className="space-y-2">
                       <Label htmlFor="departureDate" className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
@@ -211,11 +211,10 @@ const Dashboard = () => {
                         required
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="travelers" className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        Number of Travelers
+                        Travelers
                       </Label>
                       <Select
                         value={formData.travelers}
@@ -228,6 +227,28 @@ const Dashboard = () => {
                           {Array.from({ length: 10 }, (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()} className="hover:bg-muted">
                               {i + 1} {i === 0 ? "Person" : "People"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {/* 🆕 ADDED: Trip Duration Field */}
+                    <div className="space-y-2">
+                      <Label htmlFor="tripDuration" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-accent" /> {/* Using Calendar icon for days */}
+                        Trip Duration (Days)
+                      </Label>
+                      <Select
+                        value={formData.tripDuration}
+                        onValueChange={(value) => handleSelectChange("tripDuration", value)}
+                      >
+                        <SelectTrigger className="travel-input">
+                          <SelectValue placeholder="3 days" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border border-border">
+                          {Array.from({ length: 14 }, (_, i) => ( // Offering 1 to 14 days
+                            <SelectItem key={i + 1} value={(i + 1).toString()} className="hover:bg-muted">
+                              {i + 1} {i === 0 ? "Day" : "Days"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -264,7 +285,6 @@ const Dashboard = () => {
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="travel-card text-center hover:scale-105 transition-transform duration-300">
                 <CardHeader>
                   <div className="mx-auto p-3 bg-gradient-to-r from-success to-accent rounded-full w-fit mb-4">
@@ -278,7 +298,6 @@ const Dashboard = () => {
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="travel-card text-center hover:scale-105 transition-transform duration-300">
                 <CardHeader>
                   <div className="mx-auto p-3 bg-gradient-to-r from-accent to-primary rounded-full w-fit mb-4">

@@ -1,5 +1,4 @@
 // src/pages/Results.tsx
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -17,7 +16,7 @@ import {
   Plane,
   AlertCircle,
   Map,
-  AlertTriangle, // Added for the warning icon
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +32,7 @@ interface TripData {
   travelMode: string;
   departureDate: string;
   travelers: string;
+  tripDuration: string; // 🆕 ADDED: Trip duration field
   timestamp: string;
 }
 
@@ -68,10 +68,9 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [daysLeft, setDaysLeft] = useState<number | null>(null); // New state for days left
-
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const tripData = currentTrip;
-  
+
   useEffect(() => {
     async function verifyToken() {
       const token = localStorage.getItem('token');
@@ -92,24 +91,19 @@ const Results = () => {
   // New: Calculate days left until the trip
   useEffect(() => {
     if (!tripData?.departureDate) return;
-
     const today = new Date();
     const departure = new Date(tripData.departureDate);
     const diffTime = departure.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert ms to days
-
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     setDaysLeft(diffDays);
   }, [tripData]);
 
   useEffect(() => {
     if (!tripData) return;
-
     const fetchGeoAndWeather = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        // Geocode start and destination
         const geoPromises = [tripData.startLocation, tripData.destination].map((location) =>
           fetch(
             `https://api.opentripmap.com/0.1/en/places/geoname?name=${encodeURIComponent(
@@ -119,23 +113,16 @@ const Results = () => {
             .then((res) => res.json())
             .catch(() => null)
         );
-
         const [startGeo, destGeo] = await Promise.all(geoPromises);
-
         if (!startGeo || !destGeo || startGeo.status === "error" || destGeo.status === "error") {
           throw new Error("Could not find one or more locations. Please check spelling.");
         }
-
         const startLat = startGeo.lat;
         const startLon = startGeo.lon;
         const destLat = destGeo.lat;
         const destLon = destGeo.lon;
-
-        // Calculate distance
         const km = calculateDistance(startLat, startLon, destLat, destLon);
         setDistance(`${km.toFixed(1)} km`);
-
-        // Estimate duration
         let hours = 0;
         switch (tripData.travelMode?.toLowerCase()) {
           case "car":
@@ -151,18 +138,13 @@ const Results = () => {
             hours = km / 60;
         }
         setDuration(formatDuration(hours));
-
-        // Fetch weather
         const weatherRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
+          ` https://api.open-meteo.com/v1/forecast?latitude=${destLat}&longitude=${destLon}&current_weather=true&forecast_days=1&timezone=auto`
         );
-
         if (!weatherRes.ok) throw new Error("Weather service unavailable");
-
         const weatherData = await weatherRes.json();
         const temp = Math.round(weatherData.current_weather.temperature);
         const conditionCode = weatherData.current_weather.weathercode;
-
         const conditions: Record<number, string> = {
           0: "Clear",
           1: "Mainly Clear",
@@ -183,9 +165,7 @@ const Results = () => {
           96: "Thunderstorm with Hail",
           99: "Thunderstorm with Heavy Hail",
         };
-
         const condition = conditions[conditionCode] || "Unknown";
-
         setWeather({
           temperature: `${temp}°C`,
           condition,
@@ -201,7 +181,6 @@ const Results = () => {
         setLoading(false);
       }
     };
-
     fetchGeoAndWeather();
   }, [tripData]);
 
@@ -231,13 +210,11 @@ const Results = () => {
   // Export as JSON
   const handleExport = () => {
   if (!tripData) return;
-
   const newWindow = window.open("", "_blank");
   if (!newWindow) {
     alert("Please allow popups to export the trip.");
     return;
   }
-
   const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -326,7 +303,6 @@ const Results = () => {
       <div class="container">
         <h1>Your Trip to ${tripData.destination}</h1>
         <p class="subtitle">Planned via TravelPlanner • ${new Date().toLocaleDateString()}</p>
-
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">From:</span> ${tripData.startLocation}
@@ -340,8 +316,10 @@ const Results = () => {
           <div class="info-item">
             <span class="info-label">Travelers:</span> ${tripData.travelers}
           </div>
+          <div class="info-item"> <!-- 🆕 ADDED -->
+            <span class="info-label">Duration:</span> ${tripData.tripDuration} Days
+          </div>
         </div>
-
         <div class="section">
           <h2 class="section-title">Trip Summary</h2>
           <div class="info-grid">
@@ -356,7 +334,6 @@ const Results = () => {
             </div>
           </div>
         </div>
-
         <div class="section">
           <h2 class="section-title">Recommended Hotels</h2>
           ${hotels
@@ -374,7 +351,6 @@ const Results = () => {
             )
             .join("")}
         </div>
-
         <div class="section">
           <h2 class="section-title">Top Restaurants</h2>
           ${restaurants
@@ -392,7 +368,6 @@ const Results = () => {
             )
             .join("")}
         </div>
-
         <div class="section">
           <h2 class="section-title">Must-Visit Attractions</h2>
           ${attractions
@@ -410,16 +385,14 @@ const Results = () => {
             )
             .join("")}
         </div>
-
         <div class="footer">
-          <p>Thank you for using TravelPlanner! • <a href="https://travelplanner.example.com" target="_blank">travelplanner.example.com</a></p>
+          <p>Thank you for using TravelPlanner! • <a href=" https://travelplanner.example.com " target="_blank">travelplanner.example.com</a></p>
           <p><em>Exported on ${new Date().toLocaleString()}</em></p>
         </div>
       </div>
     </body>
     </html>
   `;
-
   newWindow.document.write(htmlContent);
   newWindow.document.close();
   newWindow.focus();
@@ -479,7 +452,7 @@ const Results = () => {
       price: "$350/night",
       image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop",
       contact: "+1 (555) 123-4567",
-      website: "https://hotel-example.com"
+      website: " https://hotel-example.com "
     },
     {
       title: `Boutique Stay ${tripData.destination}`,
@@ -489,7 +462,7 @@ const Results = () => {
       price: "$280/night",
       image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=500&h=300&fit=crop",
       contact: "+1 (555) 987-6543",
-      website: "https://boutique-example.com"
+      website: " https://boutique-example.com "
     }
   ];
 
@@ -510,7 +483,7 @@ const Results = () => {
       location: `Uptown ${tripData.destination}`,
       rating: 4.6,
       price: "$80-120",
-      image: "https://images.unsplash.com/photo-1625944230945-1b7dd3b949ab?w=500&h=300&fit=crop",
+      image: " https://images.unsplash.com/photo-1625944230945-1b7dd3b949ab?w=500&h=300&fit=crop",
       contact: "+1 (555) 234-5678",
       openHours: "5:00 PM - 10:00 PM"
     }
@@ -522,9 +495,9 @@ const Results = () => {
       description: `Explore the rich history and cultural heritage of ${tripData.destination} through guided tours and exhibitions.`,
       location: `City Center, ${tripData.destination}`,
       rating: 4.4,
-      image: "https://images.unsplash.com/photo-1571766963077-c90be7ccd790?w=500&h=300&fit=crop",
+      image: " https://images.unsplash.com/photo-1571766963077-c90be7ccd790?w=500&h=300&fit=crop",
       openHours: "Daily, 9:00 AM - 6:00 PM",
-      website: "https://attractions-example.com"
+      website: " https://attractions-example.com "
     },
     {
       title: `${tripData.destination} Landmark`,
@@ -538,10 +511,122 @@ const Results = () => {
     }
   ];
 
+  // 🆕 ADDED: Function to generate a dynamic itinerary
+  const generateItinerary = (destination: string, numDays: number) => {
+    const itinerary = [];
+
+    for (let day = 1; day <= numDays; day++) {
+      const activities = [];
+
+      if (day === 1) {
+        // Day 1: Arrival
+        activities.push({
+          time: "03:00 PM - 04:00 PM",
+          title: "Arrival",
+          description: `Arrival at ${destination} Airport. Pickup by pre-booked taxi to hotel.`,
+          details: "Transport: Taxi (Booking Ref: XYZ123)"
+        });
+        activities.push({
+          time: "04:30 PM - 05:30 PM",
+          title: "Hotel Check-in",
+          description: `Hotel Check-in at 'Grand ${destination} Resort'`,
+          details: "Accommodation: Check-in from 2 PM. Room 205. View on Map"
+        });
+        activities.push({
+          time: "06:00 PM - 08:00 PM",
+          title: "Sightseeing",
+          description: `Visit ${destination} Central Square`,
+          details: "Category: Sightseeing. Local Transport: Walk/Rented Scooter."
+        });
+        activities.push({
+          time: "08:30 PM - 10:30 PM",
+          title: "Dinner",
+          description: `Dinner at 'The ${destination} Bistro'`,
+          details: "Meals & Dining: Reservation confirmed. Menu Link"
+        });
+      } else if (day === numDays) {
+        // Last Day: Departure
+        activities.push({
+          time: "08:00 AM - 09:00 AM",
+          title: "Breakfast",
+          description: "Breakfast at hotel.",
+          details: "Meals & Dining: Buffet included."
+        });
+        activities.push({
+          time: "10:00 AM - 12:00 PM",
+          title: "Shopping",
+          description: `Shopping at ${destination} Market`,
+          details: "Category: Relaxation. Transport: Local taxi. Market Map"
+        });
+        activities.push({
+          time: "12:30 PM - 01:30 PM",
+          title: "Lunch",
+          description: `Lunch at a local ${destination} restaurant`,
+          details: "Meals & Dining: Suggested: 'Local Delights'. No reservation needed."
+        });
+        activities.push({
+          time: "02:30 PM - 04:00 PM",
+          title: "Museum Visit",
+          description: `${destination} City Museum`,
+          details: "Category: Sightseeing. Transport: Taxi. Exhibit Info"
+        });
+        activities.push({
+          time: "05:00 PM",
+          title: "Hotel Check-out",
+          description: "Hotel Check-out",
+          details: "Accommodation: Luggage can be stored at reception."
+        });
+        activities.push({
+          time: "06:00 PM",
+          title: "Departure Transfer",
+          description: "Transfer to Airport",
+          details: "Transport: Pre-booked taxi. Estimated travel time: 45 mins."
+        });
+      } else {
+        // Middle Days: Adventure & Culture
+        activities.push({
+          time: "08:00 AM - 09:00 AM",
+          title: "Breakfast",
+          description: "Breakfast at hotel.",
+          details: "Meals & Dining: Buffet included."
+        });
+        activities.push({
+          time: "09:30 AM - 01:00 PM",
+          title: "Adventure Activity",
+          description: `${destination} National Park Hike`,
+          details: "Category: Adventure. Transport: Guided Tour Bus."
+        });
+        activities.push({
+          time: "02:00 PM - 04:00 PM",
+          title: "Cultural Tour",
+          description: `${destination} Cultural Heritage Tour`,
+          details: "Category: Sightseeing/Relaxation. Transport: Included in tour."
+        });
+        activities.push({
+          time: "07:00 PM - 09:00 PM",
+          title: "Evening Event",
+          description: `Night Cruise on ${destination} River`,
+          details: "Category: Event. Boarding at 6:45 PM. Ticket Info. Personal Note: Carry light jacket."
+        });
+      }
+
+      itinerary.push({
+        day: day,
+        title: day === 1 ? "Arrival & City Vibes" : day === numDays ? "Leisure & Departure" : "Adventure & Culture",
+        activities: activities
+      });
+    }
+
+    return itinerary;
+  };
+
+  // 🆕 ADDED: Generate the itinerary
+  const numDays = parseInt(tripData.tripDuration, 10) || 3;
+  const itinerary = generateItinerary(tripData.destination, numDays);
+
   return (
     <div className="min-h-screen travel-gradient-bg">
       <Navbar />
-      
       <div className="pt-20 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
@@ -585,8 +670,20 @@ const Results = () => {
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
+              {/* 🆕 ADDED: Jump to Itinerary Button */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const element = document.getElementById('itinerary-section');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
+                Activities
+              </Button>
             </div>
-            
           </div>
 
           {/* Days Left Alert Banner */}
@@ -642,7 +739,6 @@ const Results = () => {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="travel-card">
               <CardHeader className="flex flex-row items-center space-y-0 pb-2">
                 <Thermometer className="h-5 w-5 text-accent mr-2" />
@@ -656,7 +752,6 @@ const Results = () => {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="travel-card">
               <CardHeader className="flex flex-row items-center space-y-0 pb-2">
                 <Badge className="bg-success/10 text-success">Ready to Go</Badge>
@@ -681,7 +776,7 @@ const Results = () => {
               onClick={() => {
                 const start = encodeURIComponent(tripData.startLocation);
                 const dest = encodeURIComponent(tripData.destination);
-                const url = `https://www.google.com/maps/dir/${start}/${dest}`;
+                const url = ` https://www.google.com/maps/dir/ ${start}/${dest}`;
                 window.open(url, "_blank");
               }}
             >
@@ -743,7 +838,7 @@ const Results = () => {
           </section>
 
           {/* Attractions */}
-          <section>
+          <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Must-Visit Attractions in {tripData.destination}</h2>
               <Badge variant="secondary">{attractions.length} attractions</Badge>
@@ -765,6 +860,36 @@ const Results = () => {
                   className="animate-slide-up"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 />
+              ))}
+            </div>
+          </section>
+
+          {/* 🆕 ADDED: Dynamic Day-to-Day Itinerary Section */}
+          <section id="itinerary-section" className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Your Day-to-Day Itinerary</h2>
+              <Badge variant="secondary">{numDays} Days</Badge>
+            </div>
+            <div className="space-y-8">
+              {itinerary.map((dayPlan, dayIndex) => (
+                <div key={dayIndex} className="space-y-4">
+                  <h3 className="text-xl font-semibold border-l-4 border-primary pl-3">
+                    Day {dayPlan.day}: {dayPlan.title}
+                  </h3>
+                  <div className="space-y-3">
+                    {dayPlan.activities.map((activity, actIndex) => (
+                      <div key={actIndex} className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-4 p-3 border border-border/50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{activity.time}</p>
+                          <p className="text-muted-foreground">{activity.description}</p>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-2 sm:mt-0">
+                          {activity.details}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </section>
