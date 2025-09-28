@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/auth.routes');
 const adminRoutes = require('./routes/admin.routes');
+const staffRoutes = require('./routes/staff.routes'); // 🆕 ADDED
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes); // ✅ Correct prefix
+app.use('/api/staff', staffRoutes); // 🆕 ADDED
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -65,6 +65,50 @@ router.post('/login', async (req, res) => {
 // 🔐 Protect all following routes
 router.use(authenticateAdmin);
 
+// ✅ NEW: Save user feedback
+router.post('/save-feedback', async (req, res) => {
+  try {
+    const { name, email, feedback } = req.body;
+    
+    if (!name || !email || !feedback) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const [newFeedbackId] = await db('feedback').insert({
+      name,
+      email,
+      message: feedback,
+      created_at: new Date()
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Feedback saved successfully',
+      feedback_id: newFeedbackId
+    });
+  } catch (error) {
+    console.error('Error saving feedback:', error);
+    res.status(500).json({ success: false, message: 'Error saving feedback', err: error.message });
+  }
+});
+
+// ✅ NEW: Get all user feedback for the admin panel
+router.get('/get-feedback', async (req, res) => {
+  try {
+    const feedbackList = await db('feedback')
+      .select('*')
+      .orderBy('created_at', 'desc');
+      
+    res.status(200).json({ 
+      success: true, 
+      feedback: feedbackList 
+    });
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    res.status(500).json({ success: false, message: 'Error fetching feedback', err: error.message });
+  }
+});
+
 // ✅ Get all users
 router.get('/get-users', async (req, res) => {
   try {

@@ -1,16 +1,20 @@
+// src/components/AdminSidebar.tsx
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Users, 
-  MapPin, 
-  Hotel, 
-  UtensilsCrossed, 
-  Camera,
   LayoutDashboard,
   Menu,
   X,
   Plane,
-  LogOut
+  LogOut,
+  Settings,
+  FileText,
+  AlertTriangle,
+  Shield,
+  MessageSquare, // ✅ Replaced Mail with MessageSquare
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,11 +29,41 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { 
+      title: "Dashboard", 
+      href: "/admin/dashboard", 
+      icon: LayoutDashboard 
+    },
+    { 
       title: "Manage Users", 
       href: "/admin/users", 
       icon: Users 
     },
-    
+    { 
+      title: "User Feedback", // ✅ Updated title
+      href: "/admin/feedback", // ✅ New path
+      icon: MessageSquare // ✅ New icon
+    },
+    { 
+      title: "Reports & Analytics", 
+      href: "/admin/reports", 
+      icon: FileText 
+    },
+    { 
+      title: "Audit Logs", 
+      href: "/admin/audit", 
+      icon: Shield 
+    },
+    { 
+      title: "Support Tickets", 
+      href: "/admin/support", 
+      icon: AlertTriangle 
+    },
+    { 
+      title: "Content Management", 
+      href: "/admin/content", 
+      icon: Database 
+    }
+    // ❌ Removed "Email Notifications"
   ];
 
   return (

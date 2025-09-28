@@ -11,7 +11,7 @@ import Navbar from "@/components/Navbar";
 import { useTrip } from "@/context/TripContext"; // Import context
 import { authAPI } from "@/services/AuthAPI";
 
-const Dashboard = () => {
+const UserDashboard = () => {
   const navigate = useNavigate();
   const { setCurrentTrip } = useTrip(); // Use context
 
@@ -319,4 +319,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default UserDashboard;
