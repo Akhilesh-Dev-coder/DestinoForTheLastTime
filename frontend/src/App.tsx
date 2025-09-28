@@ -21,10 +21,7 @@ import StaffLogin from "./pages/auth/StaffLogin";
 
 // Admin pages (all from /admin folder)
 import Dashboard from "./pages/admin/Dashboard";
-import Reports from "./pages/admin/Reports";
 import Audit from "./pages/admin/Audit";
-import Support from "./pages/admin/Support";
-import AdminContent from "./pages/admin/AdminContent";
 import Feedback from "./pages/admin/Feedback"; // ✅ NEW: Feedback page
 import UserDashboard from "./pages/UserDashboard";
 
@@ -54,10 +51,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<Dashboard />} />
             <Route path="/admin/users" element={<ManageUsers />} />
-            <Route path="/admin/reports" element={<Reports />} />
             <Route path="/admin/audit" element={<Audit />} />
-            <Route path="/admin/support" element={<Support />} />
-            <Route path="/admin/content" element={<AdminContent />} />
             <Route path="/admin/feedback" element={<Feedback />} /> {/* ✅ NEW ROUTE */}
 
             {/* Other Public Routes */}

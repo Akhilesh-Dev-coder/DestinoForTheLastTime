@@ -70,11 +70,12 @@ const Navbar = () => {
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedback.trim() || !name.trim() || !email.trim()) return;
-
+  
     setIsSubmitting(true);
-
+  
     try {
-      const response = await fetch("https://formspree.io/f/xbladaer", {
+      // 🔥 SEND TO YOUR OWN BACKEND INSTEAD OF FORMSPREE
+      const response = await fetch("http://localhost:5000/api/admin/save-feedback", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,26 +83,22 @@ const Navbar = () => {
         body: JSON.stringify({
           name,
           email,
-          feedback,
-          subject: "📬 New Feedback from Destino User",
+          feedback, // this becomes 'message' in your DB
         }),
       });
-
+  
+      const data = await response.json();
+  
       if (response.ok) {
-        // Reset form
         setFeedback("");
         setName("");
         setEmail("");
         setIsSubmitting(false);
         setIsFeedbackOpen(false);
         setShowSuccess(true);
-
-        // Hide success toast after 3 seconds
         setTimeout(() => setShowSuccess(false), 3000);
       } else {
-        const result = await response.json();
-        console.error("Formspree error:", result);
-        alert("Failed to send feedback. Please try again.");
+        alert(data.message || "Failed to send feedback. Please try again.");
         setIsSubmitting(false);
       }
     } catch (error) {

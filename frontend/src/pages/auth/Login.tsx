@@ -1,3 +1,5 @@
+// src/pages/auth/Login.tsx
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
@@ -5,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import axios from "axios";
 import { authAPI } from "@/services/AuthAPI";
 
 const Login = () => {
@@ -29,12 +30,12 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData.email, formData.password);
-      if(response.success) {
+      if (response.success) {
         localStorage.setItem("token", response.token);
         localStorage.setItem("user", JSON.stringify(response.user));
         navigate("/dashboard");
       } else {
-        alert('Something Went Wrong : ' + response.message);
+        setError(response.message || "Login failed. Please try again.");
       }
     } catch (err: any) {
       console.log(err);
@@ -131,9 +132,12 @@ const Login = () => {
                 </Link>
               </p>
 
-              <div className="text-center">
-                <Link to="/admin-login" className="text-xs text-muted-foreground hover:text-primary">
+              <div className="text-center space-y-1">
+                <Link to="/admin-login" className="text-xs text-muted-foreground hover:text-primary block">
                   Admin Login
+                </Link>
+                <Link to="/staff-login" className="text-xs text-muted-foreground hover:text-primary block">
+                  Staff Login
                 </Link>
               </div>
             </CardFooter>

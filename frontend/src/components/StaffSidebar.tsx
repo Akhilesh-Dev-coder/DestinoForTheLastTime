@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+// src/components/StaffSidebar.tsx
+
+import { useState } from "react";
 import {
   MapPin,
   Hotel,
@@ -10,24 +12,14 @@ import {
   Plane,
   LogOut,
   FileText,
-  Users,
   MessageCircle,
-  Bell,
-  ChevronRight,
-  User
+  ChevronRight
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const StaffSidebar = ({ activeSection, onSectionChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [staffInfo, setStaffInfo] = useState(null);
-
-  useEffect(() => {
-    // Load staff info from localStorage
-    const staff = localStorage.getItem("staff");
-    if (staff) {
-      setStaffInfo(JSON.parse(staff));
-    }
-  }, []);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
@@ -74,15 +66,13 @@ const StaffSidebar = ({ activeSection, onSectionChange }) => {
       icon: MessageCircle,
       badge: "3"
     },
-    
   ];
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.removeItem("staffToken");
       localStorage.removeItem("staff");
-      // In real app: navigate("/staff-login");
-      alert("Logged out successfully! Redirecting to login page...");
+      navigate("/login"); // ✅ Redirect to main user login
     }
   };
 
@@ -116,24 +106,6 @@ const StaffSidebar = ({ activeSection, onSectionChange }) => {
           )}
         </button>
       </div>
-
-      {/* Staff Info */}
-      {!isCollapsed && staffInfo && (
-        <div className="p-4 border-b border-slate-700/50 bg-slate-800/20">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{staffInfo.name}</p>
-              <p className="text-xs text-slate-400 truncate">{staffInfo.email}</p>
-              <span className="inline-block px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
-                {staffInfo.role}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Navigation */}
       <nav className="p-4 flex-1 overflow-y-auto">
@@ -190,28 +162,8 @@ const StaffSidebar = ({ activeSection, onSectionChange }) => {
         </ul>
       </nav>
 
-      {/* Notifications (when collapsed) */}
-      {isCollapsed && (
-        <div className="p-4 border-t border-slate-700/50">
-          <button className="w-full flex justify-center p-2 text-slate-400 hover:text-yellow-400 transition-colors relative">
-            <Bell className="h-5 w-5" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></div>
-          </button>
-        </div>
-      )}
-
-      {/* Bottom section */}
-      <div className="p-4 border-t border-slate-700/50 bg-slate-800/20">
-        {!isCollapsed && (
-          <div className="mb-3 p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-            <div className="flex items-center space-x-2 text-blue-400">
-              <Bell className="h-4 w-4" />
-              <span className="text-sm font-medium">3 New Updates</span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">Check your pending queries</p>
-          </div>
-        )}
-        
+      {/* Bottom: Logout Only */}
+      <div className="p-4 border-t border-slate-700/50 absolute bottom-0 left-0 right-0 bg-slate-800/20">
         <button
           onClick={handleLogout}
           className={`w-full flex items-center px-3 py-3 text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/30 border border-transparent rounded-lg transition-all duration-200 group ${
@@ -222,12 +174,6 @@ const StaffSidebar = ({ activeSection, onSectionChange }) => {
           {!isCollapsed && <span className="ml-3">Logout</span>}
         </button>
       </div>
-
-      {/* Resize handle */}
-      <div 
-        className="absolute top-1/2 -right-1 w-2 h-8 bg-slate-700 hover:bg-slate-600 rounded-r-md cursor-col-resize opacity-0 hover:opacity-100 transition-opacity duration-200"
-        onClick={toggleSidebar}
-      />
     </div>
   );
 };

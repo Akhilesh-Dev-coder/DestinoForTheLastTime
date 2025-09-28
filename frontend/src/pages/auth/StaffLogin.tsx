@@ -1,11 +1,15 @@
+// src/pages/auth/StaffLogin.tsx
+
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, UserCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const StaffLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,27 +21,25 @@ const StaffLogin = () => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock validation
-      if (formData.email === "staff@travel.com" && formData.password === "staff123") {
-        // Save token AND staff data (in real app, use proper state management)
-        localStorage.setItem("staffToken", "mock-staff-token");
-        localStorage.setItem("staff", JSON.stringify({
-          id: 1,
-          name: "Travel Staff",
-          email: formData.email,
-          role: "Staff"
-        }));
-        
-        // In real app: navigate("/staff/dashboard");
-        alert("Login successful! Redirecting to staff dashboard...");
+      const response = await fetch("http://localhost:5000/api/staff/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Invalid credentials");
       } else {
-        setError("Invalid credentials. Use staff@travel.com / staff123");
+        // ✅ Save real token and staff data
+        localStorage.setItem("staffToken", data.token);
+        localStorage.setItem("staff", JSON.stringify(data.staff));
+        navigate("/staff/panel"); // ✅ Redirect to real staff panel
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      console.error("Login error:", err);
+      setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ const StaffLogin = () => {
             </p>
           </div>
 
-          <div className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-200 flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-blue-400" />
@@ -125,7 +127,7 @@ const StaffLogin = () => {
 
             <div className="space-y-4 pt-4">
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
@@ -137,17 +139,27 @@ const StaffLogin = () => {
               </button>
 
               <div className="flex space-x-2 w-full">
-                <button className="w-full bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500 py-2 px-4 rounded-lg transition-all duration-200">
+                <button 
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="w-full bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500 py-2 px-4 rounded-lg transition-all duration-200"
+                >
                   ← User Login
                 </button>
-                <button className="w-full bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500 py-2 px-4 rounded-lg transition-all duration-200">
+                <button 
+                  type="button"
+                  onClick={() => navigate("/admin-login")}
+                  className="w-full bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500 py-2 px-4 rounded-lg transition-all duration-200"
+                >
                   Admin Login →
                 </button>
               </div>
             </div>
-          </div>
+          </form>
         </div>
 
+        {/* Optional: Remove demo credentials in production */}
+        {/* 
         <div className="text-center text-slate-400 text-sm space-y-2">
           <p className="font-semibold">Demo Credentials:</p>
           <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
@@ -155,9 +167,8 @@ const StaffLogin = () => {
             <p>🔐 Password: <span className="text-purple-400 font-mono">staff123</span></p>
           </div>
         </div>
+        */}
       </div>
-
-      
     </div>
   );
 };

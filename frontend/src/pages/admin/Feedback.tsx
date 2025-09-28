@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, CheckCircle, Trash2, Clock } from "lucide-react";
+import { MessageSquare, CheckCircle, Trash2, Search as SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import AdminSidebar from "@/components/AdminSidebar";
 
 const Feedback = () => {
@@ -16,20 +15,24 @@ const Feedback = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
 
-  // TODO: Replace with real API call
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("adminToken");
-        const res = await fetch("http://localhost:5000/api/admin/feedback", {
+        if (!token) {
+          window.location.href = "/admin-login";
+          return;
+        }
+
+        const res = await fetch("http://localhost:5000/api/admin/get-feedback", {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
         });
 
         if (res.status === 401 || res.status === 403) {
-          // Redirect to login if unauthorized
+          localStorage.removeItem("adminToken");
           window.location.href = "/admin-login";
           return;
         }
@@ -52,16 +55,35 @@ const Feedback = () => {
   }, []);
 
   const markAsRead = (id) => {
-    // TODO: Call API to mark as read
+    // Optional: Call API to update status (not implemented in your backend yet)
+    // For now, just update UI
     setFeedbackList(feedbackList.map(f => 
       f.id === id ? { ...f, status: "Read" } : f
     ));
   };
 
-  const deleteFeedback = (id) => {
+  const deleteFeedback = async (id) => {
     if (!window.confirm("Are you sure you want to delete this feedback?")) return;
-    // TODO: Call delete API
-    setFeedbackList(feedbackList.filter(f => f.id !== id));
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`http://localhost:5000/api/admin/delete-feedback/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setFeedbackList(feedbackList.filter(f => f.id !== id));
+      } else {
+        alert(data.message || "Failed to delete feedback");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting feedback. Please try again.");
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -72,9 +94,9 @@ const Feedback = () => {
   };
 
   const filteredFeedback = feedbackList.filter(item =>
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    item.message?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (loading) {
@@ -104,7 +126,7 @@ const Feedback = () => {
               <div className="flex items-center justify-between">
                 <CardTitle>Feedback Inbox</CardTitle>
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search feedback..."
                     value={searchQuery}
@@ -145,9 +167,9 @@ const Feedback = () => {
                             {item.message}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {new Date(item.createdAt).toLocaleDateString()}
+                            {new Date(item.created_at).toLocaleDateString()}
                           </TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
+                          <TableCell>{getStatusBadge(item.status || "New")}</TableCell>
                           <TableCell className="text-right space-x-2">
                             {item.status !== "Read" && (
                               <Button

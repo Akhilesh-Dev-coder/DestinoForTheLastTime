@@ -1,7 +1,11 @@
+// routes/auth.routes.js
 const db = require('../configs/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = require('express').Router();
+
+// 🔒 Import audit logger
+const logAudit = require('../utils/auditLogger');
 
 router.post('/register', async (req, res) => {
   try {
@@ -28,6 +32,15 @@ router.post('/register', async (req, res) => {
       username,
       email,
       password: hashedPassword,
+    });
+
+    // 🔒 Log audit: User Signup
+    await logAudit({
+      userId: newUserId,
+      username: email,
+      action: 'User Signup',
+      details: { username, email },
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown'
     });
 
     const token = jwt.sign(
@@ -65,14 +78,31 @@ router.post('/login', async (req, res) => {
 
     const user = await db('user_creds').where({ email }).first();
     if (!user) {
+      // 🔒 Log failed login attempt
+      await logAudit({
+        username: email,
+        action: 'Failed Login Attempt',
+        details: { reason: 'User not found' },
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown'
+      });
+
       return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'Invalid credentials',
       });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      // 🔒 Log failed login attempt
+      await logAudit({
+        userId: user.user_id,
+        username: email,
+        action: 'Failed Login Attempt',
+        details: { reason: 'Incorrect password' },
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown'
+      });
+
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
@@ -80,17 +110,26 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
+      { id: user.user_id, email: user.email, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // 🔒 Log successful login
+    await logAudit({
+      userId: user.user_id,
+      username: email,
+      action: 'User Login',
+      details: { userAgent: req.get('User-Agent') },
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown'
+    });
 
     res.status(200).json({
       success: true,
       message: 'User logged in successfully',
       token,
       user: {
-        id: user.id,
+        id: user.user_id,
         username: user.username,
         email: user.email,
       },

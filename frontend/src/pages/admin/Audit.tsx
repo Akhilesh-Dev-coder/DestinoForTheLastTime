@@ -1,32 +1,69 @@
 // src/pages/admin/Audit.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import AdminSidebar from "@/components/AdminSidebar";
 
 const Audit = () => {
+  const [logs, setLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const auditLogs = [
-    { id: 1, user: "admin@travelapp.com", action: "Deleted user account", timestamp: "2024-06-15 14:32:18", ip: "192.168.1.100" },
-    { id: 2, user: "admin@travelapp.com", action: "Updated system settings", timestamp: "2024-06-15 13:45:02", ip: "192.168.1.100" },
-    { id: 3, user: "moderator@travelapp.com", action: "Approved feedback entry", timestamp: "2024-06-15 12:10:33", ip: "192.168.1.101" },
-    { id: 4, user: "admin@travelapp.com", action: "Suspended user account", timestamp: "2024-06-15 11:05:47", ip: "192.168.1.100" },
-  ];
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch("http://localhost:5000/api/admin/get-audit-logs", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
 
-  const filteredLogs = auditLogs.filter(log =>
-    log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.ip.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/admin-login";
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          setLogs(data.logs);
+          setFilteredLogs(data.logs);
+        } else {
+          setError("Failed to load audit logs");
+        }
+      } catch (err) {
+        setError("Network error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
+
+  useEffect(() => {
+    const filtered = logs.filter(log =>
+      log.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.ip_address?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredLogs(filtered);
+  }, [searchQuery, logs]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen travel-gradient-bg flex items-center justify-center">
+        <p className="text-muted-foreground">Loading audit logs...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen travel-gradient-bg">
-        <AdminSidebar />
+      <AdminSidebar />
       <div className="ml-16 lg:ml-64 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
@@ -49,6 +86,7 @@ const Audit = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {error && <p className="text-red-500 mb-4">{error}</p>}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -68,10 +106,10 @@ const Audit = () => {
                   ) : (
                     filteredLogs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell>{log.user}</TableCell>
+                        <TableCell className="font-medium">{log.username || "System"}</TableCell>
                         <TableCell>{log.action}</TableCell>
-                        <TableCell>{log.timestamp}</TableCell>
-                        <TableCell>{log.ip}</TableCell>
+                        <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground">{log.ip_address}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -79,8 +117,6 @@ const Audit = () => {
               </Table>
             </CardContent>
           </Card>
-
-          
         </div>
       </div>
     </div>

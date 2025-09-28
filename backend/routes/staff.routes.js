@@ -7,192 +7,127 @@ const router = require('express').Router();
 const authenticateStaff = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
-  }
-
+  if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Ensure the token belongs to a staff member
-    if (decoded.role !== 'staff') {
-      return res.status(403).json({ success: false, message: 'Access denied. Staff privileges required.' });
-    }
     req.staff = decoded;
     next();
   } catch (err) {
-    return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+    return res.status(403).json({ success: false, message: 'Invalid or expired token' });
   }
 };
 
-// ✅ Staff Login (Plain text comparison)
+// ✅ Staff Login (Plain-text password)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
-
-    const staff = await db('staff').where({ email }).first();
+    const staff = await db('staff').where({ email, password }).first();
     if (!staff) {
-      return res.status(401).json({ success: false, message: 'Staff member not found' });
-    }
-
-    // Plain text comparison (⚠️ only for internal use)
-    if (password !== staff.password) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-
     const token = jwt.sign(
-      { id: staff.id, email: staff.email, role: 'staff' },
+      { id: staff.id, email: staff.email, name: staff.name, role: staff.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
-
-    res.status(200).json({
+    res.json({
       success: true,
-      message: 'Staff logged in successfully',
       token,
-      user: { // Using 'user' to match your frontend expectation
+      staff: {
         id: staff.id,
-        username: staff.username,
+        name: staff.name,
         email: staff.email,
-        role: 'staff'
-      },
+        role: staff.role
+      }
     });
-  } catch (error) {
-    console.error('Staff login error:', error);
-    res.status(500).json({ success: false, message: 'Server error', err: error.message });
+  } catch (err) {
+    console.error('Staff login error:', err);
+    res.status(500).json({ success: false, message: 'Server error during login' });
   }
 });
 
-// 🔐 Protect all following routes
+// 🔐 Protect all routes below
 router.use(authenticateStaff);
 
-// ✅ Get all user-submitted content for review (e.g., trips, reviews)
-router.get('/content-queue', async (req, res) => {
+// ✅ Get all content
+router.get('/content', async (req, res) => {
   try {
-    // Example: Fetch user-submitted trips that need review
-    // You would adjust this query based on your actual data model
-    const pendingContent = await db('user_submissions')
-      .where({ status: 'pending' })
-      .select('*');
-      
-    res.status(200).json({ 
-      success: true, 
-      content: pendingContent 
+    const travel = await db('travel_info').select('*');
+    const hotels = await db('hotels').select('*');
+    const restaurants = await db('restaurants').select('*');
+    const attractions = await db('attractions').select('*');
+    const queries = await db('user_queries').select('*');
+    res.json({
+      success: true,
+      data: {
+        travel,
+        hotels,
+        restaurants,
+        attractions,
+        queries
+      }
     });
-  } catch (error) {
-    console.error('Error fetching content queue:', error);
-    res.status(500).json({ success: false, message: 'Error fetching content', err: error.message });
+    
+  } catch (err) {
+    console.error('Error fetching content:', err);
+    res.status(500).json({ success: false, message: 'Failed to load content' });
   }
 });
 
-// ✅ Get all user queries/complaints
-router.get('/user-queries', async (req, res) => {
+// ✅ Update item
+router.put('/content/:table/:id', async (req, res) => {
+  const { table, id } = req.params;
+  const allowed = ['travel_info', 'hotels', 'restaurants', 'attractions', 'user_queries'];
+  if (!allowed.includes(table)) {
+    return res.status(400).json({ success: false, message: 'Invalid table name' });
+  }
   try {
-    const queries = await db('user_queries')
-      .where({ status: 'unresolved' })
-      .select('*');
-      
-    res.status(200).json({ 
-      success: true, 
-      queries 
-    });
-  } catch (error) {
-    console.error('Error fetching user queries:', error);
-    res.status(500).json({ success: false, message: 'Error fetching queries', err: error.message });
+    const updated = await db(table).where({ id }).update(req.body);
+    if (updated === 0) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+    res.json({ success: true, message: 'Item updated successfully' });
+  } catch (err) {
+    console.error(`Error updating ${table}:`, err);
+    res.status(500).json({ success: false, message: 'Update failed' });
   }
 });
 
-// ✅ Resolve a user query
-router.put('/resolve-query/:id', async (req, res) => {
+// ✅ Create item
+router.post('/content/:table', async (req, res) => {
+  const { table } = req.params;
+  const allowed = ['travel_info', 'hotels', 'restaurants', 'attractions'];
+  if (!allowed.includes(table)) {
+    return res.status(400).json({ success: false, message: 'Invalid table for creation' });
+  }
   try {
-    const { resolution_notes } = req.body;
-    const updated = await db('user_queries')
-      .where({ id: req.params.id })
-      .update({ 
-        status: 'resolved',
-        resolved_by: req.staff.id,
-        resolution_notes,
-        resolved_at: new Date()
-      });
-      
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Query not found' });
-    }
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Query resolved successfully' 
-    });
-  } catch (error) {
-    console.error('Error resolving query:', error);
-    res.status(500).json({ success: false, message: 'Error resolving query', err: error.message });
+    const [newId] = await db(table).insert(req.body);
+    res.status(201).json({ success: true, id: newId, message: 'Item created successfully' });
+  } catch (err) {
+    console.error(`Error creating in ${table}:`, err);
+    res.status(500).json({ success: false, message: 'Create failed' });
   }
 });
 
-// ✅ Approve/Reject user-submitted content
-router.post('/review-content/:id', async (req, res) => {
-  try {
-    const { action, notes } = req.body; // action: 'approve' or 'reject'
-    
-    if (!['approve', 'reject'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'Invalid action. Use "approve" or "reject".' });
-    }
-
-    const updateData = {
-      status: action === 'approve' ? 'approved' : 'rejected',
-      reviewed_by: req.staff.id,
-      review_notes: notes,
-      reviewed_at: new Date()
-    };
-
-    const updated = await db('user_submissions')
-      .where({ id: req.params.id })
-      .update(updateData);
-      
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Content not found' });
-    }
-    
-    res.status(200).json({ 
-      success: true, 
-      message: `Content ${action}d successfully` 
-    });
-  } catch (error) {
-    console.error('Error reviewing content:', error);
-    res.status(500).json({ success: false, message: 'Error reviewing content', err: error.message });
+// ✅ Delete item
+router.delete('/content/:table/:id', async (req, res) => {
+  const { table, id } = req.params;
+  const allowed = ['travel_info', 'hotels', 'restaurants', 'attractions'];
+  if (!allowed.includes(table)) {
+    return res.status(400).json({ success: false, message: 'Invalid table for deletion' });
   }
-});
-
-// ✅ Escalate an issue to admin
-router.post('/escalate-issue', async (req, res) => {
   try {
-    const { issue_title, issue_description, content_id } = req.body;
-    
-    if (!issue_title || !issue_description) {
-      return res.status(400).json({ success: false, message: 'Title and description are required' });
+    const deleted = await db(table).where({ id }).del();
+    if (deleted === 0) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
     }
-
-    const [newIssueId] = await db('escalated_issues').insert({
-      title: issue_title,
-      description: issue_description,
-      content_id: content_id || null,
-      escalated_by: req.staff.id,
-      status: 'pending',
-      created_at: new Date()
-    });
-
-    res.status(201).json({ 
-      success: true, 
-      message: 'Issue escalated to admin successfully',
-      issue_id: newIssueId
-    });
-  } catch (error) {
-    console.error('Error escalating issue:', error);
-    res.status(500).json({ success: false, message: 'Error escalating issue', err: error.message });
+    res.json({ success: true, message: 'Item deleted successfully' });
+  } catch (err) {
+    console.error(`Error deleting from ${table}:`, err);
+    res.status(500).json({ success: false, message: 'Delete failed' });
   }
 });
 

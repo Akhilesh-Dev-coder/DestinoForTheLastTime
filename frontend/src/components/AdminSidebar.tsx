@@ -43,26 +43,13 @@ const AdminSidebar = () => {
       href: "/admin/feedback", // ✅ New path
       icon: MessageSquare // ✅ New icon
     },
-    { 
-      title: "Reports & Analytics", 
-      href: "/admin/reports", 
-      icon: FileText 
-    },
+    
     { 
       title: "Audit Logs", 
       href: "/admin/audit", 
       icon: Shield 
     },
-    { 
-      title: "Support Tickets", 
-      href: "/admin/support", 
-      icon: AlertTriangle 
-    },
-    { 
-      title: "Content Management", 
-      href: "/admin/content", 
-      icon: Database 
-    }
+    
     // ❌ Removed "Email Notifications"
   ];
 
